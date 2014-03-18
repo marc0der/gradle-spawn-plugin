@@ -1,0 +1,83 @@
+apply plugin: 'idea'
+apply plugin: 'groovy'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy:1.8.9'
+    compile gradleApi()
+    testCompile 'org.spockframework:spock-core:0.7-groovy-1.8'
+}
+
+group = 'com.wiredforcode'
+archivesBaseName = 'gradle-exec-plugin'
+version = '0.9.8'
+
+apply plugin: 'distribution'
+
+distributions {
+    main {
+        baseName = archivesBaseName
+        contents {
+            from { libsDir }
+        }
+    }
+}
+
+ext {
+    bintrayBaseUrl = 'https://api.bintray.com/maven'
+    bintrayUsername = 'vermeulen-mp'
+    bintrayRepository = 'gradle-plugins'
+    bintrayPackage = 'gradle-exec-plugin'
+}
+
+apply plugin: 'maven-publish'
+
+task sourceJar(type: Jar) {
+   from sourceSets.main.allJava
+   classifier = 'source'
+}
+
+publishing {
+    publications {
+        plugin(MavenPublication) {
+            from components.java
+
+            artifact sourceJar {
+                classifier "sources"
+            }
+
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('name', 'Gradle Exec plugin')
+                root.appendNode('description', 'Gradle plugin for spawning and killing command line processes.')
+                root.appendNode('inceptionYear', '2014')
+
+                def license = root.appendNode('licenses').appendNode('license')
+                license.appendNode('name', 'The Apache Software License, Version 2.0')
+                license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+                license.appendNode('distribution', 'repo')
+
+                def developer = root.appendNode('developers').appendNode('developer')
+                developer.appendNode('id', 'vermeulen.mp')
+                developer.appendNode('name', 'Marco Vermeulen')
+                developer.appendNode('email', 'vermeulen.mp@gmail.com')
+            }
+
+        }
+    }
+
+    repositories {
+        maven {
+            name 'Bintray'
+            url "$bintrayBaseUrl/$bintrayUsername/$bintrayRepository/$bintrayPackage"
+
+            credentials {
+                username = System.getenv('BINTRAY_USERNAME') ?: 'invalid_user'
+                password = System.getenv('BINTRAY_API_KEY') ?: 'invalid_key'
+            }
+        }
+    }
+}
