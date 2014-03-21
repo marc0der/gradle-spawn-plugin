@@ -1,1 +1,5 @@
 .gradle
+.idea
+.pid.lock
+build
+gradle-spawn-process.iml
