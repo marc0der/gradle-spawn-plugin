@@ -12,8 +12,8 @@ dependencies {
 }
 
 group = 'com.wiredforcode'
-archivesBaseName = 'gradle-exec-plugin'
-version = '0.9.8'
+archivesBaseName = 'gradle-spawn-plugin'
+version = '0.5.0'
 
 apply plugin: 'distribution'
 
@@ -30,7 +30,7 @@ ext {
     bintrayBaseUrl = 'https://api.bintray.com/maven'
     bintrayUsername = 'vermeulen-mp'
     bintrayRepository = 'gradle-plugins'
-    bintrayPackage = 'gradle-exec-plugin'
+    bintrayPackage = 'gradle-spawn-plugin'
 }
 
 apply plugin: 'maven-publish'
@@ -51,7 +51,7 @@ publishing {
 
             pom.withXml {
                 def root = asNode()
-                root.appendNode('name', 'Gradle Exec plugin')
+                root.appendNode('name', 'Gradle Spawn plugin')
                 root.appendNode('description', 'Gradle plugin for spawning and killing command line processes.')
                 root.appendNode('inceptionYear', '2014')
 
