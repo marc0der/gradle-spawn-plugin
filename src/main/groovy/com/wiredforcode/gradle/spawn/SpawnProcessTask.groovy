@@ -36,6 +36,7 @@ class SpawnProcessTask extends DefaultTask {
         def line
         def reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
         while ((line = reader.readLine()) != null) {
+            logger.quiet line
             if (line.contains(ready)) {
                 logger.quiet "$command is ready."
                 break;
