@@ -1,11 +1,11 @@
-package com.wiredforcode.gradle.exec
+package com.wiredforcode.gradle.spawn
 
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
-import static com.wiredforcode.gradle.exec.SpawnProcessTask.LOCK_FILE
+import static com.wiredforcode.gradle.spawn.SpawnProcessTask.LOCK_FILE
 
 class KillProcessTaskSpec extends Specification {
 

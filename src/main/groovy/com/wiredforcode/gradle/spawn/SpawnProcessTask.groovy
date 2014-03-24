@@ -1,4 +1,4 @@
-package com.wiredforcode.gradle.exec
+package com.wiredforcode.gradle.spawn
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
