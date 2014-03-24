@@ -11,6 +11,8 @@ class KillProcessTask extends DefaultTask {
 
     @TaskAction
     void kill() {
+        if(!directory) throw new GradleException("Ensure that mandatory directory is set.")
+
         def pidFile = new File(directory, LOCK_FILE)
         if(!pidFile.exists()) throw new GradleException("No server running!")
 

@@ -63,7 +63,7 @@ class KillProcessTaskSpec extends Specification {
         assert directory.deleteDir()
     }
 
-    void "should blow up if no pid file exists"() {
+    void "should explode if no pid file exists"() {
         given:
         int kindaUnique = Math.random() * 10000
         def directory = new File("/tmp/spawn-$kindaUnique")
@@ -73,6 +73,17 @@ class KillProcessTaskSpec extends Specification {
         and:
         killTask.directory = directoryPath
         def lockFile = new File(directoryPath, LOCK_FILE)
+
+        when:
+        killTask.kill()
+
+        then:
+        thrown GradleException
+    }
+
+    void "should enforce mandatory directory field"() {
+        given:
+        killTask.directory = null
 
         when:
         killTask.kill()
