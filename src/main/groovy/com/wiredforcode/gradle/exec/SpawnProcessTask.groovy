@@ -19,6 +19,10 @@ class SpawnProcessTask extends DefaultTask {
 
     @TaskAction
     void spawn(){
+        if(!(command && directory && ready)) {
+            throw new GradleException("Ensure that mandatory fields command, directory and ready are set.")
+        }
+
         def pidFile = new File(directory, LOCK_FILE)
         if(pidFile.exists()) throw new GradleException("Server already running!")
 
