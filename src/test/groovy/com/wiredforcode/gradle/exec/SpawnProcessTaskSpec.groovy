@@ -9,7 +9,7 @@ import static com.wiredforcode.gradle.exec.SpawnProcessTask.LOCK_FILE
 
 class SpawnProcessTaskSpec extends Specification {
 
-    public static final String SPAWN_PROCESS_TASK_NAME = 'spawnProcess'
+    static final SPAWN_PROCESS_TASK_NAME = 'spawnProcess'
 
     Project project
     SpawnProcessTask task
