@@ -20,7 +20,7 @@ class SpawnProcessTask extends DefaultTask {
     @TaskAction
     void spawn(){
         if(!(command && ready)) {
-            throw new GradleException("Ensure that mandatory fields command, directory and ready are set.")
+            throw new GradleException("Ensure that mandatory fields command and ready are set.")
         }
 
         def pidFile = new File(directory, LOCK_FILE)
