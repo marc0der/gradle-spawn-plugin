@@ -8,6 +8,8 @@ A typical application of this plugin is for stopping and starting an embedded we
 
 Add the following to your `build.gradle`:
 
+    import com.wiredforcode.gradle.spawn.*
+
 	buildscript {
 		repositories {
 			...
