@@ -60,17 +60,10 @@ publishing {
                 license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
                 license.appendNode('distribution', 'repo')
 
-                def developers = root.appendNode('developers')
-
-                def developer1 = developers.appendNode('developer')
-                developer1.appendNode('id', 'vermeulen.mp')
-                developer1.appendNode('name', 'Marco Vermeulen')
-                developer1.appendNode('email', 'vermeulen.mp@gmail.com')
-
-                def developer2 = developers.appendNode('developer')
-                developer2.appendNode('id', 'tomaslin')
-                developer2.appendNode('name', 'Tomas Lin')
-                developer2.appendNode('email', 'tomaslin+bintray@gmail.com')
+                def developer = root.appendNode('developers').appendNode('developer')
+                developer.appendNode('id', 'vermeulen.mp')
+                developer.appendNode('name', 'Marco Vermeulen')
+                developer.appendNode('email', 'vermeulen.mp@gmail.com')
             }
 
         }
