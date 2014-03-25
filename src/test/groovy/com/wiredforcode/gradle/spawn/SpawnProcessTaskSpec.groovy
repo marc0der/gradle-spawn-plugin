@@ -81,19 +81,6 @@ class SpawnProcessTaskSpec extends Specification {
         thrown GradleException
     }
 
-    void "should enforce mandatory directory field"() {
-        given:
-        task.command = "ls -lah"
-        task.ready = "Some message"
-        task.directory = null
-
-        when:
-        task.spawn()
-
-        then:
-        thrown GradleException
-    }
-
     void "should enforce mandatory ready field"() {
         given:
         task.directory = directory.toString()
@@ -106,5 +93,25 @@ class SpawnProcessTaskSpec extends Specification {
         then:
         thrown GradleException
     }
+
+    void "should set current directory as default for directory field"() {
+        given:
+        task
+
+        expect:
+        task.directory == '.'
+    }
+
+    void "should allow an override of the directory field"() {
+        given:
+        task
+
+        when:
+        task.directory = directory.toString()
+
+        then:
+        task.directory == directory.toString()
+    }
+
 
 }

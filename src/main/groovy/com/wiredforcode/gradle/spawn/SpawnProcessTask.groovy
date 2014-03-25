@@ -11,7 +11,7 @@ class SpawnProcessTask extends DefaultTask {
 
     String command
     String ready
-    String directory
+    String directory = '.'
 
     SpawnProcessTask(){
         description = "Spawn a new server process in the background."
@@ -19,7 +19,7 @@ class SpawnProcessTask extends DefaultTask {
 
     @TaskAction
     void spawn(){
-        if(!(command && directory && ready)) {
+        if(!(command && ready)) {
             throw new GradleException("Ensure that mandatory fields command, directory and ready are set.")
         }
 
