@@ -2,4 +2,4 @@
 .idea
 .pid.lock
 build
-gradle-spawn-process.iml
+gradle-spawn-plugin.iml
