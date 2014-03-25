@@ -16,6 +16,8 @@ class KillProcessTaskSpec extends Specification {
     SpawnProcessTask spawnTask
     KillProcessTask killTask
 
+    File directory
+
     void setup(){
         project = ProjectBuilder.builder().build()
         project.apply plugin: 'spawn'
@@ -23,16 +25,14 @@ class KillProcessTaskSpec extends Specification {
         spawnTask = project.tasks.findByName(SPAWN_PROCESS_TASK_NAME)
         killTask = project.tasks.findByName(KILL_PROCESS_TASK_NAME)
 
+        int kindaUnique = Math.random() * 10000
+        directory = new File("/tmp/spawn-$kindaUnique")
+        directory.mkdirs()
     }
 
     void "should kill a process if a pid lock file is present"() {
         given:
-        int kindaUnique = Math.random() * 10000
-        def directory = new File("/tmp/spawn-$kindaUnique")
-        directory.mkdirs()
         def directoryPath = directory.toString()
-
-        and:
         def processSource = new File("src/test/resources/process.sh")
         def process = new File(directory, "process.sh")
         process << processSource.text
@@ -65,14 +65,10 @@ class KillProcessTaskSpec extends Specification {
 
     void "should explode if no pid file exists"() {
         given:
-        int kindaUnique = Math.random() * 10000
-        def directory = new File("/tmp/spawn-$kindaUnique")
-        directory.mkdirs()
         def directoryPath = directory.toString()
 
         and:
         killTask.directory = directoryPath
-        def lockFile = new File(directoryPath, LOCK_FILE)
 
         when:
         killTask.kill()
@@ -81,15 +77,26 @@ class KillProcessTaskSpec extends Specification {
         thrown GradleException
     }
 
-    void "should enforce mandatory directory field"() {
+    void "should set current directory as default for directory field"() {
         given:
-        killTask.directory = null
+        killTask
+
+        expect:
+        killTask.directory == '.'
+    }
+
+    void "should allow an override of the directory field"() {
+        given:
+        def directoryPath = directory.toString()
+
+        and:
+        killTask
 
         when:
-        killTask.kill()
+        killTask.directory = directoryPath
 
         then:
-        thrown GradleException
+        killTask.directory == directoryPath
     }
 
 }
