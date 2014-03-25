@@ -36,7 +36,7 @@ ext {
 apply plugin: 'maven-publish'
 
 task sourceJar(type: Jar) {
-   from sourceSets.main.allJava
+   from sourceSets.main.allSource
    classifier = 'source'
 }
 
