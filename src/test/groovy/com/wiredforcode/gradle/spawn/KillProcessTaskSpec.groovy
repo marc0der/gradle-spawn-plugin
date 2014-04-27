@@ -5,8 +5,6 @@ import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
-import static com.wiredforcode.gradle.spawn.SpawnProcessTask.LOCK_FILE
-
 class KillProcessTaskSpec extends Specification {
 
     static final SPAWN_PROCESS_TASK_NAME = "spawnProcess"
@@ -48,7 +46,7 @@ class KillProcessTaskSpec extends Specification {
 
         when:
         spawnTask.spawn()
-        def lockFile = new File(directoryPath, LOCK_FILE)
+        def lockFile = new File(directoryPath, spawnTask.lockFile)
 
         then:
         lockFile.exists()
