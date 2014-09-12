@@ -20,7 +20,7 @@ class KillProcessTaskSpec extends Specification {
 
     void setup(){
         project = ProjectBuilder.builder().build()
-        project.apply plugin: 'spawn'
+        project.apply plugin: 'com.wiredforcode.spawn'
 
         spawnTask = project.tasks.findByName(SPAWN_PROCESS_TASK_NAME)
         killTask = project.tasks.findByName(KILL_PROCESS_TASK_NAME)

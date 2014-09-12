@@ -18,7 +18,7 @@ class SpawnProcessTaskSpec extends Specification {
 
     void setup(){
         project = ProjectBuilder.builder().build()
-        project.apply plugin: 'spawn'
+        project.apply plugin: 'com.wiredforcode.spawn'
 
         task = project.tasks.findByName(SPAWN_PROCESS_TASK_NAME)
 
