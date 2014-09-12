@@ -16,11 +16,11 @@ Add the following to your `build.gradle`:
 			maven { url 'http://dl.bintray.com/vermeulen-mp/gradle-plugins' }
 		}
 		dependencies {
-			classpath 'com.wiredforcode:gradle-spawn-plugin:0.5.1'
+			classpath 'com.wiredforcode:gradle-spawn-plugin:0.6.0'
 		}
 	}
 
-	apply plugin: 'spawn'
+	apply plugin: 'com.wiredforcode.spawn'
 
 	task startServer(type: SpawnProcessTask, dependsOn: 'assemble') {
 		command "java -jar ${projectDir}/build/libs/zim-service.jar"
