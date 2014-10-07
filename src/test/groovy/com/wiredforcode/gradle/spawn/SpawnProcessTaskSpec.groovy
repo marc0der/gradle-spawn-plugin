@@ -5,8 +5,6 @@ import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
-import static com.wiredforcode.gradle.spawn.SpawnProcessTask.LOCK_FILE
-
 class SpawnProcessTaskSpec extends Specification {
 
     static final SPAWN_PROCESS_TASK_NAME = 'spawnProcess'
@@ -51,7 +49,7 @@ class SpawnProcessTaskSpec extends Specification {
         task.spawn()
 
         then:
-        new File(directory, LOCK_FILE).exists()
+        new File(directory, task.lockFile).exists()
     }
 
     void "should check if pid file already exists"() {
@@ -59,7 +57,7 @@ class SpawnProcessTaskSpec extends Specification {
         task.directory = directory.toString()
 
         and:
-        new File(directory, LOCK_FILE).createNewFile()
+        new File(directory, task.lockFile).createNewFile()
 
         when:
         task.spawn()
