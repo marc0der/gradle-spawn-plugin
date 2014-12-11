@@ -30,12 +30,21 @@ class SpawnProcessTask extends DefaultTask {
         Process process = buildProcess(directory, command)
         int pid = extractPidFromProcess(process)
         stampLockFile(pidFile, pid)
-        waitFor(process)
+
+        def reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
+        waitFor(reader)
+        def slurpThread = new Thread() {
+            void run() {
+                def line
+                while ((line = reader.readLine()) != null) {
+                }
+            }
+        }
+        slurpThread.start()
     }
 
-    private waitFor(Process process) {
+    private waitFor(def reader) {
         def line
-        def reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
         while ((line = reader.readLine()) != null) {
             logger.quiet line
             if (line.contains(ready)) {
