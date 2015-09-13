@@ -8,10 +8,6 @@ import spock.lang.Specification
 import static com.wiredforcode.gradle.spawn.SpawnProcessTask.LOCK_FILE
 
 class KillProcessTaskSpec extends Specification {
-
-    static final SPAWN_PROCESS_TASK_NAME = "spawnProcess"
-    static final KILL_PROCESS_TASK_NAME = "killProcess"
-
     Project project
     SpawnProcessTask spawnTask
     KillProcessTask killTask
@@ -22,8 +18,8 @@ class KillProcessTaskSpec extends Specification {
         project = ProjectBuilder.builder().build()
         project.apply plugin: 'com.wiredforcode.spawn'
 
-        spawnTask = project.tasks.findByName(SPAWN_PROCESS_TASK_NAME)
-        killTask = project.tasks.findByName(KILL_PROCESS_TASK_NAME)
+        spawnTask = project.tasks.findByName("spawnProcess")
+        killTask = project.tasks.findByName("killProcess")
 
         int kindaUnique = Math.random() * 10000
         directory = new File("/tmp/spawn-$kindaUnique")
@@ -48,7 +44,7 @@ class KillProcessTaskSpec extends Specification {
 
         when:
         spawnTask.spawn()
-        def lockFile = new File(directoryPath, LOCK_FILE)
+        def lockFile = spawnTask.pidFile
 
         then:
         lockFile.exists()
@@ -57,7 +53,7 @@ class KillProcessTaskSpec extends Specification {
         killTask.kill()
 
         then:
-        ! lockFile.exists()
+        !lockFile.exists()
 
         cleanup:
         assert directory.deleteDir()
@@ -99,4 +95,14 @@ class KillProcessTaskSpec extends Specification {
         killTask.directory == directoryPath
     }
 
+    void "should allow an override of the pid file name"() {
+        given:
+        killTask
+
+        when:
+        killTask.pidLockFileName = '.new.pid.lock'
+
+        then:
+        killTask.pidLockFileName == '.new.pid.lock'
+    }
 }
