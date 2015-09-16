@@ -13,7 +13,7 @@ dependencies {
 
 group = 'com.wiredforcode'
 archivesBaseName = 'gradle-spawn-plugin'
-version = '0.6.1-SNAPSHOT'
+version = '0.6.0'
 
 apply plugin: 'distribution'
 
@@ -80,8 +80,4 @@ publishing {
             }
         }
     }
-}
-
-task wrapper(group: "Build Setup", description: "Configures the gradle properties", type: Wrapper) {
-    gradleVersion = '2.6'
 }

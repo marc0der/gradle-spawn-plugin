@@ -6,7 +6,7 @@ import org.gradle.api.tasks.TaskAction
 class KillProcessTask extends DefaultSpawnTask {
     @TaskAction
     void kill() {
-        def pidFile = pidFile
+        def pidFile = getPidFile()
         if(!pidFile.exists()) throw new GradleException("No server running!")
 
         def pid = pidFile.text

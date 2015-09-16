@@ -17,7 +17,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
             throw new GradleException("Ensure that mandatory fields command and ready are set.")
         }
 
-        def pidFile = pidFile
+        def pidFile = getPidFile()
         if (pidFile.exists()) throw new GradleException("Server already running!")
 
         def process = buildProcess(directory, command)
@@ -28,12 +28,10 @@ class SpawnProcessTask extends DefaultSpawnTask {
 
     private void checkForAbnormalExit(Process process) {
         try {
-            if (process.exitValue() != 0) {
+            if (process.exitValue()) {
                 throw new GradleException("The process terminated unexpectedly - status code ${process.exitValue()}")
             }
-        } catch (IllegalThreadStateException ignored) {
-            //This test could be done with process.isAlive() however this is supported in java 8 only.
-        }
+        } catch (IllegalThreadStateException ignored) {}
     }
 
     private waitFor(Process process) {
@@ -57,8 +55,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
     }
 
     private File stampLockFile(File pidFile, Process process) {
-        def pid = extractPidFromProcess(process)
-        pidFile << pid
+        pidFile << extractPidFromProcess(process)
     }
 
     private int extractPidFromProcess(Process process) {
