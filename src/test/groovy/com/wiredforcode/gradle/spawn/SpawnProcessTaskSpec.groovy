@@ -8,9 +8,6 @@ import spock.lang.Specification
 import static com.wiredforcode.gradle.spawn.SpawnProcessTask.LOCK_FILE
 
 class SpawnProcessTaskSpec extends Specification {
-
-    static final SPAWN_PROCESS_TASK_NAME = 'spawnProcess'
-
     Project project
     SpawnProcessTask task
 
@@ -20,7 +17,7 @@ class SpawnProcessTaskSpec extends Specification {
         project = ProjectBuilder.builder().build()
         project.apply plugin: 'com.wiredforcode.spawn'
 
-        task = project.tasks.findByName(SPAWN_PROCESS_TASK_NAME)
+        task = project.tasks.findByName('spawnProcess')
 
         int kindaUnique = Math.random() * 10000
         directory = new File("/tmp/spawn-$kindaUnique")
@@ -51,7 +48,32 @@ class SpawnProcessTaskSpec extends Specification {
         task.spawn()
 
         then:
-        new File(directory, LOCK_FILE).exists()
+        task.getPidFile().exists()
+    }
+
+    void "should allow the name of the pid lock file to be overriden"(){
+        given:
+        def command = './process.sh'
+        def ready = 'It is done...'
+        def pidLockFileName = ".new.pid.lock"
+
+        and:
+        def processSource = new File("src/test/resources/process.sh")
+        def process = new File(directory, "process.sh")
+        process << processSource.text
+        process.setExecutable(true)
+
+        and:
+        task.command = command
+        task.ready = ready
+        task.directory = directory.toString()
+        task.pidLockFileName = pidLockFileName
+
+        when:
+        task.spawn()
+
+        then:
+        task.getPidFile().name == pidLockFileName
     }
 
     void "should check if pid file already exists"() {
@@ -59,7 +81,7 @@ class SpawnProcessTaskSpec extends Specification {
         task.directory = directory.toString()
 
         and:
-        new File(directory, LOCK_FILE).createNewFile()
+        task.getPidFile().createNewFile()
 
         when:
         task.spawn()
@@ -113,5 +135,29 @@ class SpawnProcessTaskSpec extends Specification {
         task.directory == directory.toString()
     }
 
+    void "should not write the pid lock file if the process exits abnormally"() {
+        given:
+        def command = './startAndDie.sh'
+        def ready = 'It is done...'
 
+        and:
+        def processSource = new File("src/test/resources/startAndDie.sh")
+        def process = new File(directory, "startAndDie.sh")
+        process << processSource.text
+        process.setExecutable(true)
+
+        and:
+        task.command = command
+        task.ready = ready
+        task.directory = directory.toString()
+
+        when:
+        task.spawn()
+
+        then:
+        def e = thrown(GradleException)
+        e.message == "The process terminated unexpectedly - status code 1"
+
+        !task.getPidFile().exists()
+    }
 }
