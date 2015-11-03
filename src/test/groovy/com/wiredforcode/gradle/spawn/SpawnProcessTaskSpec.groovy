@@ -5,8 +5,6 @@ import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
-import static com.wiredforcode.gradle.spawn.SpawnProcessTask.LOCK_FILE
-
 class SpawnProcessTaskSpec extends Specification {
     Project project
     SpawnProcessTask task
