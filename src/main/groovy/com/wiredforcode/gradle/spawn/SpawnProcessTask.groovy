@@ -29,25 +29,28 @@ class SpawnProcessTask extends DefaultSpawnTask {
     private void checkForAbnormalExit(Process process) {
         def exitValue
         try {
-            exitValue = process.exitValue()
-        } catch (IllegalThreadStateException ignored) {
-            exitValue = process.exitcode
-        }
-        if (exitValue) {
-            throw new GradleException("The process terminated unexpectedly - status code ${exitValue}")
-        }
+            process.waitFor()
+            if (process.exitValue()) {
+                throw new GradleException("The process terminated unexpectedly - status code ${exitValue}")
+            }
+        } catch (IllegalThreadStateException ignored) { }
     }
 
     private waitFor(Process process) {
         def line
-        def reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
-
-        while ((line = reader.readLine()) != null) {
-            logger.quiet line
-            if (line.contains(ready)) {
-                logger.quiet "$command is ready."
-                break;
+        def inputStream = new InputStreamReader(process.getInputStream())
+        def reader = new BufferedReader(inputStream)
+        try {
+            while ((line = reader.readLine()) != null) {
+                logger.quiet line
+                if (line.contains(ready)) {
+                    logger.quiet "$command is ready."
+                    break;
+                }
             }
+        } finally {
+            inputStream?.close()
+            reader?.close()
         }
     }
 
