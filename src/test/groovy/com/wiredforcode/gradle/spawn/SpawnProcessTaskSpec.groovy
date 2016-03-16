@@ -32,10 +32,7 @@ class SpawnProcessTaskSpec extends Specification {
         def ready = 'It is done...'
 
         and:
-        def processSource = new File("src/test/resources/process.sh")
-        def process = new File(directory, "process.sh")
-        process << processSource.text
-        process.setExecutable(true)
+        setExecutableProcess("process.sh")
 
         and:
         task.command = command
@@ -56,10 +53,7 @@ class SpawnProcessTaskSpec extends Specification {
         def pidLockFileName = ".new.pid.lock"
 
         and:
-        def processSource = new File("src/test/resources/process.sh")
-        def process = new File(directory, "process.sh")
-        process << processSource.text
-        process.setExecutable(true)
+        setExecutableProcess("process.sh")
 
         and:
         task.command = command
@@ -135,14 +129,11 @@ class SpawnProcessTaskSpec extends Specification {
 
     void "should not write the pid lock file if the process exits abnormally"() {
         given:
-        def command = './startAndDie.sh'
+        def command = './exitAbnormally.sh'
         def ready = 'It is done...'
 
         and:
-        def processSource = new File("src/test/resources/startAndDie.sh")
-        def process = new File(directory, "startAndDie.sh")
-        process << processSource.text
-        process.setExecutable(true)
+        setExecutableProcess("exitAbnormally.sh")
 
         and:
         task.command = command
@@ -156,6 +147,14 @@ class SpawnProcessTaskSpec extends Specification {
         def e = thrown(GradleException)
         e.message == "The process terminated unexpectedly - status code 1"
 
+        and:
         !task.getPidFile().exists()
+    }
+
+    private void setExecutableProcess(String processFile) {
+        def processSource = new File("src/test/resources/$processFile")
+        def process = new File(directory, processFile)
+        process << processSource.text
+        process.setExecutable(true)
     }
 }
