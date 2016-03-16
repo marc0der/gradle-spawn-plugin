@@ -27,11 +27,15 @@ class SpawnProcessTask extends DefaultSpawnTask {
     }
 
     private void checkForAbnormalExit(Process process) {
+        def exitValue
         try {
-            if (process.exitValue()) {
-                throw new GradleException("The process terminated unexpectedly - status code ${process.exitValue()}")
-            }
-        } catch (IllegalThreadStateException ignored) {}
+            exitValue = process.exitValue()
+        } catch (IllegalThreadStateException ignored) {
+            exitValue = process.exitcode
+        }
+        if (exitValue) {
+            throw new GradleException("The process terminated unexpectedly - status code ${exitValue}")
+        }
     }
 
     private waitFor(Process process) {
