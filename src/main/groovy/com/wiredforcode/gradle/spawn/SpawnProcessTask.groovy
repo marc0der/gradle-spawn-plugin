@@ -21,9 +21,16 @@ class SpawnProcessTask extends DefaultSpawnTask {
         if (pidFile.exists()) throw new GradleException("Server already running!")
 
         def process = buildProcess(directory, command)
-        waitFor(process)
-        checkForAbnormalExit(process)
-        stampLockFile(pidFile, process)
+        waitToProcessReadyOrClosed(process)
+    }
+
+    private void waitToProcessReadyOrClosed(Process process) {
+        boolean isReady = waitUntilIsReadyOrEnd(process)
+        if (!isReady) {
+            checkForAbnormalExit(process)
+        } else {
+            stampLockFile(pidFile, process)
+        }
     }
 
     private void checkForAbnormalExit(Process process) {
@@ -36,22 +43,24 @@ class SpawnProcessTask extends DefaultSpawnTask {
         } catch (IllegalThreadStateException ignored) { }
     }
 
-    private void waitFor(Process process) {
-        def line
+    private boolean waitUntilIsReadyOrEnd(Process process) {
         def inputStream = new InputStreamReader(process.getInputStream())
         def reader = new BufferedReader(inputStream)
+        def line
+        boolean isReady = false
         try {
-            while ((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null && !isReady) {
                 logger.quiet line
                 if (line.contains(ready)) {
                     logger.quiet "$command is ready."
-                    break;
+                    isReady = true
                 }
             }
         } finally {
             inputStream?.close()
             reader?.close()
         }
+        isReady
     }
 
     private Process buildProcess(String directory, String command) {
