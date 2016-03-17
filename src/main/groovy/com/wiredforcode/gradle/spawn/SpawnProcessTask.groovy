@@ -26,10 +26,10 @@ class SpawnProcessTask extends DefaultSpawnTask {
 
     private void waitToProcessReadyOrClosed(Process process) {
         boolean isReady = waitUntilIsReadyOrEnd(process)
-        if (!isReady) {
-            checkForAbnormalExit(process)
-        } else {
+        if (isReady) {
             stampLockFile(pidFile, process)
+        } else {
+            checkForAbnormalExit(process)
         }
     }
 
@@ -44,21 +44,15 @@ class SpawnProcessTask extends DefaultSpawnTask {
     }
 
     private boolean waitUntilIsReadyOrEnd(Process process) {
-        def inputStream = new InputStreamReader(process.getInputStream())
-        def reader = new BufferedReader(inputStream)
         def line
+        def reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
         boolean isReady = false
-        try {
-            while ((line = reader.readLine()) != null && !isReady) {
-                logger.quiet line
-                if (line.contains(ready)) {
-                    logger.quiet "$command is ready."
-                    isReady = true
-                }
+        while ((line = reader.readLine()) != null && !isReady) {
+            logger.quiet line
+            if (line.contains(ready)) {
+                logger.quiet "$command is ready."
+                isReady = true
             }
-        } finally {
-            inputStream?.close()
-            reader?.close()
         }
         isReady
     }
