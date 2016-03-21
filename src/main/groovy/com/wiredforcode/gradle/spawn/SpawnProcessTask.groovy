@@ -21,30 +21,40 @@ class SpawnProcessTask extends DefaultSpawnTask {
         if (pidFile.exists()) throw new GradleException("Server already running!")
 
         def process = buildProcess(directory, command)
-        waitFor(process)
-        checkForAbnormalExit(process)
-        stampLockFile(pidFile, process)
+        waitToProcessReadyOrClosed(process)
+    }
+
+    private void waitToProcessReadyOrClosed(Process process) {
+        boolean isReady = waitUntilIsReadyOrEnd(process)
+        if (isReady) {
+            stampLockFile(pidFile, process)
+        } else {
+            checkForAbnormalExit(process)
+        }
     }
 
     private void checkForAbnormalExit(Process process) {
         try {
-            if (process.exitValue()) {
-                throw new GradleException("The process terminated unexpectedly - status code ${process.exitValue()}")
+            process.waitFor()
+            def exitValue = process.exitValue()
+            if (exitValue) {
+                throw new GradleException("The process terminated unexpectedly - status code ${exitValue}")
             }
-        } catch (IllegalThreadStateException ignored) {}
+        } catch (IllegalThreadStateException ignored) { }
     }
 
-    private waitFor(Process process) {
+    private boolean waitUntilIsReadyOrEnd(Process process) {
         def line
         def reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
-
-        while ((line = reader.readLine()) != null) {
+        boolean isReady = false
+        while ((line = reader.readLine()) != null && !isReady) {
             logger.quiet line
             if (line.contains(ready)) {
                 logger.quiet "$command is ready."
-                break;
+                isReady = true
             }
         }
+        isReady
     }
 
     private Process buildProcess(String directory, String command) {
