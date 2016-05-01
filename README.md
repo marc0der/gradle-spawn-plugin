@@ -25,9 +25,14 @@ Add the following to your `build.gradle`:
 	task startServer(type: SpawnProcessTask, dependsOn: 'assemble') {
 		command "java -jar ${projectDir}/build/libs/zim-service.jar"
 		ready 'Started Application'
+		spawnName 'app-server' // optional
+		directory '.pidfiles' // optional
 	}
 
-	task stopServer(type: KillProcessTask)
+	task stopServer(type: KillProcessTask) {
+	  spawnName 'app-server' // optional
+	  directory '.pidfiles' // optional
+	}
 
 The `startServer` task is used for starting the process.
 
@@ -35,7 +40,9 @@ The command line passed into the `command` method is typically a blocking proces
 
 Once the build draws to a close, the `stopServer` task is then used to gracefully shut down the server process.
 
+Optionally, it's possible to provide names for tasks using `spawnName` and specify a directory for PID files in order to be able to spawn several tasks in parallel. Default values for the `spawnName` and `directory` are empty name and `.` (current directory), accordingly.
+
 ###PID File
 
 The `SpawnProcessTask` will automatically deposit a `.pid.lock` file in the working directory. This contains the PID of the running process.
-The `KillProcessTask` will read this lock file, kill the process gracefully, and remove the file.
+The `KillProcessTask` will read this lock file, kill the process gracefully, and remove the file. In case of spawning several tasks, files will look like `.task-name.pid.lock`.

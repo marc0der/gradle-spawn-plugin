@@ -5,8 +5,6 @@ import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
-import static com.wiredforcode.gradle.spawn.SpawnProcessTask.LOCK_FILE
-
 class KillProcessTaskSpec extends Specification {
     Project project
     SpawnProcessTask spawnTask
@@ -95,14 +93,16 @@ class KillProcessTaskSpec extends Specification {
         killTask.directory == directoryPath
     }
 
-    void "should allow an override of the pid file name"() {
+    void "should allow the task to be named"() {
         given:
+        def spawnName = "awesome-task"
         killTask
 
         when:
-        killTask.pidLockFileName = '.new.pid.lock'
+        killTask.spawnName = spawnName
 
         then:
-        killTask.pidLockFileName == '.new.pid.lock'
+        killTask.spawnName == spawnName
+        killTask.getPidFile().name == '.' + spawnName + '.pid.lock'
     }
 }
