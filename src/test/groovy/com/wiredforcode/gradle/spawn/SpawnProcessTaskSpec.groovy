@@ -46,11 +46,11 @@ class SpawnProcessTaskSpec extends Specification {
         task.getPidFile().exists()
     }
 
-    void "should allow the name of the pid lock file to be overriden"(){
+    void "should allow the task to be named"(){
         given:
         def command = './process.sh'
         def ready = 'It is done...'
-        def pidLockFileName = ".new.pid.lock"
+        def spawnName = "awesome-task"
 
         and:
         setExecutableProcess("process.sh")
@@ -59,13 +59,13 @@ class SpawnProcessTaskSpec extends Specification {
         task.command = command
         task.ready = ready
         task.directory = directory.toString()
-        task.pidLockFileName = pidLockFileName
+        task.spawnName = spawnName
 
         when:
         task.spawn()
 
         then:
-        task.getPidFile().name == pidLockFileName
+        task.getPidFile().name == '.' + spawnName + '.pid.lock';
     }
 
     void "should check if pid file already exists"() {
