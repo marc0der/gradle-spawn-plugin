@@ -172,7 +172,7 @@ class SpawnProcessTaskSpec extends Specification {
         task.spawn()
 
         then:
-        outputBuilder.toString()== "Starting...\nIt is done...\n"
+        outputBuilder.toString() == "Starting...\nIt is done...\n"
         task.getPidFile().name == pidLockFileName
     }
 
