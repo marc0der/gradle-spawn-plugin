@@ -39,3 +39,13 @@ Once the build draws to a close, the `stopServer` task is then used to gracefull
 
 The `SpawnProcessTask` will automatically deposit a `.pid.lock` file in the working directory. This contains the PID of the running process.
 The `KillProcessTask` will read this lock file, kill the process gracefully, and remove the file.
+
+###Release changes
+
+0.7.0 - You can set the name of the pid file. So you can open more than one process.
+
+	task startServer(type: SpawnProcessTask, dependsOn: 'assemble') {
+		command "java -jar ${projectDir}/build/libs/zim-service.jar"
+		ready 'Started Application'
+		pidLockFileName '.other.pid.lock'
+	}
