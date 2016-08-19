@@ -95,6 +95,22 @@ class SpawnProcessTaskSpec extends Specification {
         thrown GradleException
     }
 
+    void "supports environment variables"() {
+        given:
+        setExecutableProcess("printEnv.sh")
+
+        when:
+        task.command = './printEnv.sh'
+        task.environmentVariable 'TEST_ENV', 'TEST'
+        task.ready = "env value=TEST"
+        task.directory = directory.toString()
+
+        then:
+        task.spawn()
+        and:
+        task.getPidFile().exists()
+    }
+
     void "should enforce mandatory ready field"() {
         given:
         task.directory = directory.toString()
