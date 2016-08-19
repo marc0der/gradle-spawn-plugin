@@ -61,7 +61,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
         def line
         def reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
         boolean isReady = false
-        while ((line = reader.readLine()) != null && !isReady) {
+        while (!isReady && (line = reader.readLine()) != null) {
             logger.quiet line
             runOutputActions(line)
             if (line.contains(ready)) {
