@@ -1,8 +1,9 @@
-apply plugin: 'idea'
-apply plugin: 'groovy'
+plugins {
+  id "com.gradle.plugin-publish" version "0.9.5"
+}
 
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 dependencies {
@@ -15,9 +16,12 @@ dependencies {
 
 group = 'com.wiredforcode'
 archivesBaseName = 'gradle-spawn-plugin'
-version = '0.7.0'
+version = '0.8.0'
 
+apply plugin: 'idea'
+apply plugin: 'groovy'
 apply plugin: 'distribution'
+apply plugin: 'maven-publish'
 
 distributions {
     main {
@@ -34,8 +38,6 @@ ext {
     bintrayRepository = 'gradle-plugins'
     bintrayPackage = 'gradle-spawn-plugin'
 }
-
-apply plugin: 'maven-publish'
 
 task sourceJar(type: Jar) {
    from sourceSets.main.allSource
@@ -82,4 +84,18 @@ publishing {
             }
         }
     }
+}
+
+pluginBundle {
+  website = 'http://wiredforcode.com'
+  vcsUrl = 'https://github.com/marc0der/gradle'
+  description = 'This plugin is used for starting and stopping UNIX command line processes from within your build.'
+  tags = ['spawn', 'unix', 'process']
+
+  plugins {
+    spawnPlugin {
+      id = 'com.wiredforcode.spawn'
+      displayName = 'Gradle Spawn Plugin'
+    }
+  }
 }
