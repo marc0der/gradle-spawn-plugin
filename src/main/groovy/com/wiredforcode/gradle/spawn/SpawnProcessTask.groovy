@@ -1,11 +1,19 @@
 package com.wiredforcode.gradle.spawn
 
 import org.gradle.api.GradleException
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
 class SpawnProcessTask extends DefaultSpawnTask {
     String command
     String ready
+
+    @Input
+    Map<String, String> environmentVariables = new HashMap<String, String>()
+
+    void environmentVariable(String key, Object value) {
+        environmentVariables.put(key, String.valueOf(value))
+    }
 
     SpawnProcessTask() {
         description = "Spawn a new server process in the background."
@@ -40,7 +48,8 @@ class SpawnProcessTask extends DefaultSpawnTask {
             if (exitValue) {
                 throw new GradleException("The process terminated unexpectedly - status code ${exitValue}")
             }
-        } catch (IllegalThreadStateException ignored) { }
+        } catch (IllegalThreadStateException ignored) {
+        }
     }
 
     private boolean waitUntilIsReadyOrEnd(Process process) {
@@ -60,6 +69,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
     private Process buildProcess(String directory, String command) {
         def builder = new ProcessBuilder(command.split(' '))
         builder.redirectErrorStream(true)
+        builder.environment().putAll(environmentVariables)
         builder.directory(new File(directory))
         builder.start()
     }
