@@ -11,7 +11,7 @@ class SpawnProcessTaskSpec extends Specification {
 
     File directory
 
-    void setup(){
+    void setup() {
         project = ProjectBuilder.builder().build()
         project.apply plugin: 'com.wiredforcode.spawn'
 
@@ -22,11 +22,11 @@ class SpawnProcessTaskSpec extends Specification {
         directory.mkdirs()
     }
 
-    void cleanup(){
+    void cleanup() {
         assert directory.deleteDir()
     }
 
-    void "should start a new process and place token pid lock file in current directory"(){
+    void "should start a new process and place token pid lock file in current directory"() {
         given:
         def command = './process.sh'
         def ready = 'It is done...'
@@ -46,7 +46,7 @@ class SpawnProcessTaskSpec extends Specification {
         task.getPidFile().exists()
     }
 
-    void "should allow the name of the pid lock file to be overriden"(){
+    void "should allow the name of the pid lock file to be overriden"() {
         given:
         def command = './process.sh'
         def ready = 'It is done...'
@@ -165,6 +165,31 @@ class SpawnProcessTaskSpec extends Specification {
 
         and:
         !task.getPidFile().exists()
+    }
+
+    void "can deal with process output"() {
+        given:
+        def command = './process.sh'
+        def ready = 'It is done...'
+        def pidLockFileName = ".new.pid.lock"
+        StringBuilder outputBuilder = new StringBuilder()
+
+        and:
+        setExecutableProcess("process.sh")
+
+        and:
+        task.command = command
+        task.ready = ready
+        task.directory = directory.toString()
+        task.pidLockFileName = pidLockFileName
+        task.withOutput { outputBuilder.append("$it\n") }
+
+        when:
+        task.spawn()
+
+        then:
+        outputBuilder.toString() == "Starting...\nIt is done...\n"
+        task.getPidFile().name == pidLockFileName
     }
 
     private void setExecutableProcess(String processFile) {

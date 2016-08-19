@@ -7,6 +7,7 @@ import org.gradle.api.tasks.TaskAction
 class SpawnProcessTask extends DefaultSpawnTask {
     String command
     String ready
+    List<Closure> outputActions = new ArrayList<Closure>()
 
     @Input
     Map<String, String> environmentVariables = new HashMap<String, String>()
@@ -17,6 +18,10 @@ class SpawnProcessTask extends DefaultSpawnTask {
 
     SpawnProcessTask() {
         description = "Spawn a new server process in the background."
+    }
+
+    void withOutput(Closure outputClosure) {
+        outputActions.add(outputClosure)
     }
 
     @TaskAction
@@ -58,12 +63,19 @@ class SpawnProcessTask extends DefaultSpawnTask {
         boolean isReady = false
         while ((line = reader.readLine()) != null && !isReady) {
             logger.quiet line
+            runOutputActions(line)
             if (line.contains(ready)) {
                 logger.quiet "$command is ready."
                 isReady = true
             }
         }
         isReady
+    }
+
+    def runOutputActions(String line) {
+        outputActions.each { Closure<String> outputAction ->
+            outputAction.call(line)
+        }
     }
 
     private Process buildProcess(String directory, String command) {
