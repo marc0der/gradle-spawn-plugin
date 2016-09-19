@@ -16,7 +16,7 @@ Add the following to your `build.gradle`:
 			maven { url 'http://dl.bintray.com/vermeulen-mp/gradle-plugins' }
 		}
 		dependencies {
-			classpath 'com.wiredforcode:gradle-spawn-plugin:0.6.0'
+			classpath 'com.wiredforcode:gradle-spawn-plugin:0.7.0'
 		}
 	}
 
