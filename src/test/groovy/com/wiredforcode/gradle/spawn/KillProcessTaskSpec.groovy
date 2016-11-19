@@ -59,7 +59,7 @@ class KillProcessTaskSpec extends Specification {
         assert directory.deleteDir()
     }
 
-    void "should explode if no pid file exists"() {
+    void "should exit gracefully, if the server is not running"() {
         given:
         def directoryPath = directory.toString()
 
@@ -70,7 +70,7 @@ class KillProcessTaskSpec extends Specification {
         killTask.kill()
 
         then:
-        thrown GradleException
+        noExceptionThrown()
     }
 
     void "should set current directory as default for directory field"() {
