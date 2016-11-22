@@ -13,10 +13,10 @@ Add the following to your `build.gradle`:
 	buildscript {
 		repositories {
 			...
-			maven { url 'http://dl.bintray.com/vermeulen-mp/gradle-plugins' }
+			maven { url 'https://plugins.gradle.org/m2/' }
 		}
 		dependencies {
-			classpath 'com.wiredforcode:gradle-spawn-plugin:0.6.0'
+			classpath 'gradle.plugin.com.wiredforcode:gradle-spawn-plugin:0.8.1'
 		}
 	}
 
