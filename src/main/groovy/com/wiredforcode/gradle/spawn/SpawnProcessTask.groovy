@@ -7,6 +7,7 @@ import org.gradle.api.tasks.TaskAction
 class SpawnProcessTask extends DefaultSpawnTask {
     String command
     String ready
+    boolean printLog
     List<Closure> outputActions = new ArrayList<Closure>()
 
     @Input
@@ -69,6 +70,14 @@ class SpawnProcessTask extends DefaultSpawnTask {
                 isReady = true
             }
         }
+        Thread.start({
+            while(line != null) {
+                line = reader.readLine()
+                if (printLog) {
+                    logger.quiet line
+                }
+            }
+        })
         isReady
     }
 
