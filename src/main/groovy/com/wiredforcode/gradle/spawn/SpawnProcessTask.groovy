@@ -90,10 +90,14 @@ class SpawnProcessTask extends DefaultSpawnTask {
         pidFile << extractPidFromProcess(process)
     }
 
-    private int extractPidFromProcess(Process process) {
-        def pidField = process.class.getDeclaredField('pid')
+    private long extractPidFromProcess(Process process) {
+        def pidIdentifier = isWindowsOS() ? 'handle' : 'pid'
+        def pidField = process.class.getDeclaredField(pidIdentifier)
         pidField.accessible = true
+        return pidField.getLong(process)
+    }
 
-        return pidField.getInt(process)
+    private boolean isWindowsOS() {
+        return System.properties['os.name'].toLowerCase().contains('windows')
     }
 }
