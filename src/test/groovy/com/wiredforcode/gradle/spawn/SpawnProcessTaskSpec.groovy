@@ -82,6 +82,33 @@ class SpawnProcessTaskSpec extends Specification {
         thrown GradleException
     }
 
+    void "should allow for pid file already existing if strict mode is disabled"() {
+        given:
+        def command = './process.sh'
+
+        and:
+        setExecutableProcess("process.sh")
+
+        and:
+        task.command = command
+        task.ready =  'It is done...'
+        task.directory = directory.toString()
+        task.strict = false
+
+        and:
+        StringBuilder outputBuilder = new StringBuilder()
+        task.withOutput { outputBuilder.append("$it\n") }
+
+        and:
+        task.getPidFile().createNewFile()
+
+        when:
+        task.spawn()
+
+        then:
+        outputBuilder.toString().isEmpty()
+    }
+
     void "should enforce mandatory command field"() {
         given:
         task.directory = directory.toString()
