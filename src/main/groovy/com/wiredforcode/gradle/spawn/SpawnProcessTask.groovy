@@ -7,6 +7,7 @@ import org.gradle.api.tasks.TaskAction
 class SpawnProcessTask extends DefaultSpawnTask {
     String command
     String ready
+    boolean strict = true;
     List<Closure> outputActions = new ArrayList<Closure>()
 
     @Input
@@ -31,10 +32,16 @@ class SpawnProcessTask extends DefaultSpawnTask {
         }
 
         def pidFile = getPidFile()
-        if (pidFile.exists()) throw new GradleException("Server already running!")
-
-        def process = buildProcess(directory, command)
-        waitToProcessReadyOrClosed(process)
+        if (pidFile.exists()) {
+            if (strict) {
+                throw new GradleException("$command already running!")
+            } else {
+                logger.quiet "$command already running; proceeding."
+            }
+        } else {
+            def process = buildProcess(directory, command)
+            waitToProcessReadyOrClosed(process)
+        }
     }
 
     private void waitToProcessReadyOrClosed(Process process) {
