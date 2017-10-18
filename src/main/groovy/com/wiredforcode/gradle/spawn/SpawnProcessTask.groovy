@@ -48,36 +48,41 @@ class SpawnProcessTask extends DefaultSpawnTask {
 
     private void checkForAbnormalExit(Process process) {
         try {
-            process.waitFor()
             def exitValue = process.exitValue()
             if (exitValue) {
                 throw new GradleException("The process terminated unexpectedly - status code ${exitValue}")
             }
         } catch (IllegalThreadStateException ignored) {
+                throw new GradleException("Process failed to finish starting before timeout")
         }
     }
 
-    private boolean waitUntilIsReadyOrEnd(Process process) {
-        def line
-        def reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
-        boolean isReady = false
-        while (!isReady && (line = reader.readLine()) != null) {
-            logger.quiet line
-            runOutputActions(line)
-            if (line.contains(ready)) {
-                logger.quiet "$command is ready."
-                isReady = true
-            }
+    private boolean waitUntilIsReadyOrEnd(final Process process) {
+        def currentThread = Thread.currentThread()
+        final ReaderWorker reader = new ReaderWorker();
+        Thread worker = new Thread(new Runnable(){
+          public void run(){
+            reader.waitUntilIsReadyOrEnd(process, currentThread)
+          }
+        });
+        worker.start();
+        long endTime = timeout <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeout;
+        long startTime = System.currentTimeMillis()
+        try {
+          currentThread.sleep(timeout <= 0 ? Long.MAX_VALUE : timeout * 1000)
+          logger.warn "Timed out after: " + timeout + " seconds"
+        } catch (InterruptedException e) {
+          //Should just be the reader thread waking up because it found the success message.
+          logger.quiet "Finished after: " + (System.currentTimeMillis() - startTime) + "ms"
         }
-        isReady
+        if (reader.e != null){
+          throw e;
+        }//else
+        worker.interrupt();
+        reader.isReady
     }
 
-    def runOutputActions(String line) {
-        outputActions.each { Closure<String> outputAction ->
-            outputAction.call(line)
-        }
-    }
-
+    
     private Process buildProcess(String directory, String command) {
         def builder = new ProcessBuilder(command.split(' '))
         builder.redirectErrorStream(true)
@@ -95,5 +100,40 @@ class SpawnProcessTask extends DefaultSpawnTask {
         pidField.accessible = true
 
         return pidField.getInt(process)
+    }
+    
+    class ReaderWorker {
+      boolean isReady = false
+      Exception e;
+      void waitUntilIsReadyOrEnd(Process process, Thread waiter){
+        def line
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
+        try {
+          while (!isReady && (line = reader.readLine()) != null) {
+              logger.quiet line
+              runOutputActions(line)
+              if (line.contains(ready)) {
+                  logger.quiet "$command is ready."
+                  isReady = true
+              }
+          }
+        } catch (Exception e){
+          this.e = e;
+          e.printStackTrace();
+        } finally {
+          try {
+            reader.close()
+          } catch (IOException e){
+            logger.info("Exception closing process inputstream: ${e.message}", e)
+          }//end catch
+        }//end finally
+        waiter.interrupt()
+      }//end waitUntilIsReadyOrEnd
+      
+      def runOutputActions(String line) {
+          outputActions.each { Closure<String> outputAction ->
+              outputAction.call(line)
+          }
+      }
     }
 }

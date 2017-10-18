@@ -3,3 +3,7 @@
 .pid.lock
 build
 gradle-spawn-plugin.iml
+/bin/
+/.classpath
+/.project
+/.settings/
