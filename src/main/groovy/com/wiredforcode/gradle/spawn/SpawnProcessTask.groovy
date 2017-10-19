@@ -114,6 +114,12 @@ class SpawnProcessTask extends DefaultSpawnTask {
     
     class ReaderWorker {
       boolean isReady = false
+      /**
+       * If set, do NOT abort reading and close the pipe from the process stdout.  There
+       * are applications that will pick this up as a "Shutdown" signal.  Instead, continue
+       * "siphoning" or reading from the InputStream, but just "chuck" the data.
+       */
+      boolean siphon
       Thread waiter
       Exception e;
       
@@ -121,14 +127,27 @@ class SpawnProcessTask extends DefaultSpawnTask {
         def line
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
         def currentThread = Thread.currentThread()
+        boolean interruptSent = false
         try {
-          while (!currentThread.isInterrupted() && !isReady 
-            && (line = reader.readLine()) != null) {
+          while ((!currentThread.isInterrupted() && !isReady && (line = reader.readLine()) != null)
+            //If there is no data, nothing to siphon
+            || (line != null && siphon)) {
+              //provision siphoning for process that dump when stdout is closed
+              //This applies to golang based code specifically
+              if (siphon && isReady){
+                //done processing
+                continue;
+              }
               logger.quiet line
               runOutputActions(line)
               if (line.contains(ready)) {
                   logger.quiet "$command is ready."
                   isReady = true
+                  logger.debug "Wake listeners. Ready = ${isReady}"
+                  if (waiter != null && !currentThread.isInterrupted()) {
+                    waiter.interrupt()
+                    interruptSent = true
+                  } //else, waiter has abandoned listening
               }
           }
         } catch (Exception e){
@@ -136,15 +155,18 @@ class SpawnProcessTask extends DefaultSpawnTask {
           logger.warn("Exception starting process", e)
         } finally {
           try {
-            reader.close()
+            if (!siphon){
+              //If siphoning, don't close.  Otherwise the launched process will shutdown.
+              reader.close()
+            }
           } catch (IOException e){
             logger.info("Exception closing process inputstream: ${e.message}", e)
           }//end catch
+          if (waiter != null && !interruptSent) {
+            waiter.interrupt()
+          } //else, waiter has abandoned listening
         }//end finally
-        logger.debug "Wake listeners. Ready = ${isReady}"
-        if (waiter != null && !currentThread.isInterrupted()) {
-          waiter.interrupt()
-        } //else, waiter has abandoned listening
+        logger.trace "Finished reading stdout"
       }//end waitUntilIsReadyOrEnd
       
       def runOutputActions(String line) {

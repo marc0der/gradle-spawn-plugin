@@ -145,6 +145,7 @@ class SpawnProcessTaskSpec extends Specification {
         task.directory == directory.toString()
     }
 
+    //KABOOM!
     void "should not write the pid lock file if the process exits abnormally"() {
         given:
         def command = './exitAbnormally.sh'
