@@ -16,7 +16,7 @@ dependencies {
 
 group = 'com.wiredforcode'
 archivesBaseName = 'gradle-spawn-plugin'
-version = '0.8.3'
+version = '0.8.4'
 
 apply plugin: 'idea'
 apply plugin: 'groovy'

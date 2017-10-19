@@ -72,6 +72,8 @@ class SpawnProcessTask extends DefaultSpawnTask {
             reader.waitUntilIsReadyOrEnd(process)
           }
         });
+        worker.setDaemon(true)
+        worker.setName(name + "-worker")
         worker.start();
         long startTime = System.currentTimeMillis()
         def started = false
@@ -88,12 +90,10 @@ class SpawnProcessTask extends DefaultSpawnTask {
         if (reader.e != null){
           throw e;
         }//else
+        //Signal worker that it is done.
         worker.interrupt();
-        //Timeout in 10sec, or timeout.
-        if (worker.isAlive()){
-          //Timeout failed.  Clear thread
-          reader.waiter = null;
-        }
+        //Clear listening.
+        reader.waiter = null;
         logger.debug "Spawn Post Processing.  Ready = ${reader.isReady}"
         started && reader.isReady
     }
@@ -129,13 +129,17 @@ class SpawnProcessTask extends DefaultSpawnTask {
         def currentThread = Thread.currentThread()
         boolean interruptSent = false
         try {
-          while ((!currentThread.isInterrupted() && !isReady && (line = reader.readLine()) != null)
-            //If there is no data, nothing to siphon
-            || (line != null && siphon)) {
+          //Data to read, no EOF
+          while (((line = reader.readLine()) != null) 
+            //Can run and not yet ready
+            && (isRunnable(currentThread) && !isReady
+              //If there is no data, nothing to siphon
+              || (line != null && siphon))) {
               //provision siphoning for process that dump when stdout is closed
               //This applies to golang based code specifically
               if (siphon && isReady){
                 //done processing
+                logger.quiet currentThread.name + ':' + line
                 continue;
               }
               logger.quiet line
@@ -144,7 +148,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
                   logger.quiet "$command is ready."
                   isReady = true
                   logger.debug "Wake listeners. Ready = ${isReady}"
-                  if (waiter != null && !currentThread.isInterrupted()) {
+                  if (waiter != null && !currentThread.isInterrupted() && !interruptSent) {
                     waiter.interrupt()
                     interruptSent = true
                   } //else, waiter has abandoned listening
@@ -168,6 +172,10 @@ class SpawnProcessTask extends DefaultSpawnTask {
         }//end finally
         logger.trace "Finished reading stdout"
       }//end waitUntilIsReadyOrEnd
+      
+      boolean isRunnable(Thread currentThread){
+        return !currentThread.isInterrupted() && waiter != null & waiter.isAlive()
+      }
       
       def runOutputActions(String line) {
           outputActions.each { Closure<String> outputAction ->
