@@ -7,6 +7,12 @@ import org.gradle.api.tasks.TaskAction
 class SpawnProcessTask extends DefaultSpawnTask {
     String command
     String ready
+    /**
+     * If set, do NOT abort reading and close the pipe from the process stdout.  There
+     * are applications that will pick this up as a "Shutdown" signal.  Instead, continue
+     * "siphoning" or reading from the InputStream, but just "chuck" the data.
+     */
+    boolean siphon
     List<Closure> outputActions = new ArrayList<Closure>()
 
     @Input
@@ -114,12 +120,6 @@ class SpawnProcessTask extends DefaultSpawnTask {
     
     class ReaderWorker {
       boolean isReady = false
-      /**
-       * If set, do NOT abort reading and close the pipe from the process stdout.  There
-       * are applications that will pick this up as a "Shutdown" signal.  Instead, continue
-       * "siphoning" or reading from the InputStream, but just "chuck" the data.
-       */
-      boolean siphon
       Thread waiter
       Exception e;
       
