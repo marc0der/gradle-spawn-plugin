@@ -53,33 +53,43 @@ class SpawnProcessTask extends DefaultSpawnTask {
                 throw new GradleException("The process terminated unexpectedly - status code ${exitValue}")
             }
         } catch (IllegalThreadStateException ignored) {
-                throw new GradleException("Process failed to finish starting before timeout")
+                throw new GradleException("Process failed to finish starting before timeout ${timeout}sec")
         }
     }
 
     private boolean waitUntilIsReadyOrEnd(final Process process) {
-        def currentThread = Thread.currentThread()
+        final def currentThread = Thread.currentThread()
         final ReaderWorker reader = new ReaderWorker();
+        reader.waiter = currentThread
         Thread worker = new Thread(new Runnable(){
           public void run(){
-            reader.waitUntilIsReadyOrEnd(process, currentThread)
+            reader.waitUntilIsReadyOrEnd(process)
           }
         });
         worker.start();
-        long endTime = timeout <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeout;
         long startTime = System.currentTimeMillis()
+        def started = false
         try {
-          currentThread.sleep(timeout <= 0 ? Long.MAX_VALUE : timeout * 1000)
+          Thread.sleep(timeout <= 0 ? Long.MAX_VALUE : timeout * 1000)
           logger.warn "Timed out after: " + timeout + " seconds"
         } catch (InterruptedException e) {
           //Should just be the reader thread waking up because it found the success message.
           logger.quiet "Finished after: " + (System.currentTimeMillis() - startTime) + "ms"
+          //Clear interrupt status
+          Thread.interrupted()
+          started = true
         }
         if (reader.e != null){
           throw e;
         }//else
         worker.interrupt();
-        reader.isReady
+        //Timeout in 10sec, or timeout.
+        if (worker.isAlive()){
+          //Timeout failed.  Clear thread
+          reader.waiter = null;
+        }
+        logger.debug "Spawn Post Processing.  Ready = ${reader.isReady}"
+        started && reader.isReady
     }
 
     
@@ -104,12 +114,16 @@ class SpawnProcessTask extends DefaultSpawnTask {
     
     class ReaderWorker {
       boolean isReady = false
+      Thread waiter
       Exception e;
-      void waitUntilIsReadyOrEnd(Process process, Thread waiter){
+      
+      void waitUntilIsReadyOrEnd(Process process){
         def line
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
+        def currentThread = Thread.currentThread()
         try {
-          while (!isReady && (line = reader.readLine()) != null) {
+          while (!currentThread.isInterrupted() && !isReady 
+            && (line = reader.readLine()) != null) {
               logger.quiet line
               runOutputActions(line)
               if (line.contains(ready)) {
@@ -119,7 +133,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
           }
         } catch (Exception e){
           this.e = e;
-          e.printStackTrace();
+          logger.warn("Exception starting process", e)
         } finally {
           try {
             reader.close()
@@ -127,7 +141,10 @@ class SpawnProcessTask extends DefaultSpawnTask {
             logger.info("Exception closing process inputstream: ${e.message}", e)
           }//end catch
         }//end finally
-        waiter.interrupt()
+        logger.debug "Wake listeners. Ready = ${isReady}"
+        if (waiter != null && !currentThread.isInterrupted()) {
+          waiter.interrupt()
+        } //else, waiter has abandoned listening
       }//end waitUntilIsReadyOrEnd
       
       def runOutputActions(String line) {

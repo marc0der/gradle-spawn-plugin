@@ -213,10 +213,13 @@ class SpawnProcessTaskSpec extends Specification {
 
       then:
       def e = thrown(GradleException)
-      e.message == "Process failed to finish starting before timeout"
+      e.message == "Process failed to finish starting before timeout 7sec"
 
       and:
       !task.getPidFile().exists()
+      
+      cleanup:
+      task.timeout = 0
     }
 
     private void setExecutableProcess(String processFile) {
