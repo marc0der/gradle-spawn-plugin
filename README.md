@@ -47,3 +47,18 @@ It is also possible to set the name of the pid file allowing more than one proce
 		ready 'Started Application'
 		pidLockFileName '.other.pid.lock'
 	}
+
+###Log File
+
+The `SpawnProcessTask` works by directly reading the output stream of the child process it starts, looking for the ready statement. 
+If you specify a `logFileName` it will instead route the output stream to that file and then tail that file looking for the ready statement.
+This is very useful for long lived processes that generate lots of output and would otherwise deadlock (see http://stackoverflow.com/questions/3285408/java-processbuilder-resultant-process-hangs#answer-3285479)
+
+The log file will be removed by the `SpawnProcessTask` if it exists before spawning the process, effectively truncating it.
+
+	task startServer(type: SpawnProcessTask) {
+		command "java -jar someScriptHere.sh"
+		ready 'Started Application'
+		pidLockFileName '.other.pid.lock'
+		logFileName = 'myServerLog.txt'
+	}

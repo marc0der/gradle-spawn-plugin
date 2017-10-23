@@ -8,6 +8,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
     String command
     String ready
     List<Closure> outputActions = new ArrayList<Closure>()
+    String logFileName = null;
 
     @Input
     Map<String, String> environmentVariables = new HashMap<String, String>()
@@ -24,6 +25,10 @@ class SpawnProcessTask extends DefaultSpawnTask {
         outputActions.add(outputClosure)
     }
 
+    File getLogFile() {
+        return logFileName == null ? null : new File(directory, logFileName)
+    }
+
     @TaskAction
     void spawn() {
         if (!(command && ready)) {
@@ -32,13 +37,14 @@ class SpawnProcessTask extends DefaultSpawnTask {
 
         def pidFile = getPidFile()
         if (pidFile.exists()) throw new GradleException("Server already running!")
+        //if (logFile != null && logFile.exists()) logFile.delete()
 
         def process = buildProcess(directory, command)
         waitToProcessReadyOrClosed(process)
     }
 
     private void waitToProcessReadyOrClosed(Process process) {
-        boolean isReady = waitUntilIsReadyOrEnd(process)
+        boolean isReady = waitUntilIsReadyOrEnd(logFile, process)
         if (isReady) {
             stampLockFile(pidFile, process)
         } else {
@@ -57,18 +63,29 @@ class SpawnProcessTask extends DefaultSpawnTask {
         }
     }
 
-    private boolean waitUntilIsReadyOrEnd(Process process) {
+    private boolean waitUntilIsReadyOrEnd(File logFile, Process process) {
         def line
-        def reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
+        def reader = logFile == null ?
+                new BufferedReader(new InputStreamReader(process.getInputStream())) :
+                new BufferedReader(new InputStreamReader(new FileInputStream(logFile)))
         boolean isReady = false
-        while (!isReady && (line = reader.readLine()) != null) {
-            logger.quiet line
-            runOutputActions(line)
-            if (line.contains(ready)) {
-                logger.quiet "$command is ready."
-                isReady = true
+        while (!isReady) {
+            line = reader.readLine()
+            if (line == null){
+                if (logFile != null && process.alive)
+                    Thread.sleep(10)
+                else
+                    break
+            } else {
+                logger.quiet line
+                runOutputActions(line)
+                if (line.contains(ready)) {
+                    logger.quiet "$command is ready."
+                    isReady = true
+                }
             }
         }
+        if (logFile != null) reader.close()
         isReady
     }
 
@@ -78,9 +95,12 @@ class SpawnProcessTask extends DefaultSpawnTask {
         }
     }
 
-    private Process buildProcess(String directory, String command) {
-        def builder = new ProcessBuilder(command.split(' '))
+    private Process buildProcess(String directory, String ... command) {
+        def builder = new ProcessBuilder(command)
         builder.redirectErrorStream(true)
+        if (logFile != null){
+            builder.redirectOutput(logFile)
+        }
         builder.environment().putAll(environmentVariables)
         builder.directory(new File(directory))
         builder.start()

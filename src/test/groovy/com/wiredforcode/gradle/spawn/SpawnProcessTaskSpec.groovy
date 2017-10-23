@@ -46,6 +46,70 @@ class SpawnProcessTaskSpec extends Specification {
         task.getPidFile().exists()
     }
 
+    void "should property start process when using log file"() {
+        given:
+        def command = './process.sh'
+        def ready = 'It is done...'
+
+        and:
+        setExecutableProcess("process.sh")
+
+        and:
+        task.command = command
+        task.ready = ready
+        task.directory = directory.toString()
+        task.logFileName = "log.txt"
+
+        when:
+        task.spawn()
+
+        then:
+        task.getPidFile().exists()
+    }
+
+    void "should record all output in log file when using a log file"() {
+        given:
+        def command = './process.sh'
+        def ready = 'It is done...'
+
+        and:
+        setExecutableProcess("process.sh")
+
+        and:
+        task.command = command
+        task.ready = ready
+        task.directory = directory.toString()
+        task.logFileName = "log.txt"
+
+        when:
+        task.spawn()
+
+        then:
+        task.logFile.text.startsWith("Starting...\nIt is done...\n")
+    }
+
+    void "should remove log file before starting process"() {
+        given:
+        def command = './process.sh'
+        def ready = 'It is done...'
+
+        and:
+        setExecutableProcess("process.sh")
+
+        and:
+        task.command = command
+        task.ready = ready
+        task.directory = directory.toString()
+        task.logFileName = "log.txt"
+        task.logFile.text = "Remove me"
+
+        when:
+        task.spawn()
+
+        then:
+        task.logFile.text.startsWith("Starting...\nIt is done...\n")
+    }
+
     void "should allow the name of the pid lock file to be overriden"() {
         given:
         def command = './process.sh'
