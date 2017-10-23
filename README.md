@@ -1,10 +1,10 @@
-##Gradle Spawn Plugin
+## Gradle Spawn Plugin
 
 This plugin is used for starting and stopping UNIX command line processes from within your build.
 
 A typical application of this plugin is for stopping and starting an embedded web server when running functional tests from within your build.
 
-###Setup
+### Setup
 
 Add the following to your `build.gradle`:
 
@@ -16,7 +16,7 @@ Add the following to your `build.gradle`:
 			maven { url 'http://dl.bintray.com/vermeulen-mp/gradle-plugins' }
 		}
 		dependencies {
-			classpath 'com.wiredforcode:gradle-spawn-plugin:0.6.0'
+			classpath 'com.wiredforcode:gradle-spawn-plugin:0.8.0'
 		}
 	}
 
@@ -35,7 +35,7 @@ The command line passed into the `command` method is typically a blocking proces
 
 Once the build draws to a close, the `stopServer` task is then used to gracefully shut down the server process.
 
-###PID File
+### PID File
 
 The `SpawnProcessTask` will automatically deposit a `.pid.lock` file in the working directory. This contains the PID of the running process.
 The `KillProcessTask` will read this lock file, kill the process gracefully, and remove the file.
