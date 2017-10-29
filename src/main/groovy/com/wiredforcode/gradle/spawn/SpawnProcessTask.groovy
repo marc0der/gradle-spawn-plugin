@@ -139,7 +139,6 @@ class SpawnProcessTask extends DefaultSpawnTask {
               //This applies to golang based code specifically
               if (siphon && isReady){
                 //done processing
-                logger.quiet currentThread.name + ':' + line
                 continue;
               }
               logger.quiet line
