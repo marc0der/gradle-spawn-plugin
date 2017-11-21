@@ -16,7 +16,7 @@ dependencies {
 
 group = 'com.wiredforcode'
 archivesBaseName = 'gradle-spawn-plugin'
-version = '0.8.4'
+version = '0.8.5'
 
 apply plugin: 'idea'
 apply plugin: 'groovy'
@@ -34,7 +34,7 @@ distributions {
 
 ext {
     bintrayBaseUrl = 'https://api.bintray.com/maven'
-    bintrayUsername = 'vermeulen-mp'
+    bintrayUsername = 'gorky'
     bintrayRepository = 'gradle-plugins'
     bintrayPackage = 'gradle-spawn-plugin'
 }

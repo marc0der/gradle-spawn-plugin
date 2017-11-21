@@ -32,6 +32,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
 
     @TaskAction
     void spawn() {
+        logger.quiet "Spawning ${command}"
         if (!(command && ready)) {
             throw new GradleException("Ensure that mandatory fields command and ready are set.")
         }
@@ -59,6 +60,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
                 throw new GradleException("The process terminated unexpectedly - status code ${exitValue}")
             }
         } catch (IllegalThreadStateException ignored) {
+            logger.debug(ignored.getMessage(), ignored)
                 throw new GradleException("Process failed to finish starting before timeout ${timeout}sec")
         }
     }
@@ -94,7 +96,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
         worker.interrupt();
         //Clear listening.
         reader.waiter = null;
-        logger.debug "Spawn Post Processing.  Ready = ${reader.isReady}"
+        logger.quiet "Spawn Post Processing.  Ready = ${reader.isReady}"
         started && reader.isReady
     }
 
@@ -120,12 +122,54 @@ class SpawnProcessTask extends DefaultSpawnTask {
     
     class ReaderWorker {
       boolean isReady = false
-      Thread waiter
+      volatile Thread waiter
       Exception e;
       
-      void waitUntilIsReadyOrEnd(Process process){
+      void waitUntilIsReadyOrEnd(final Process process){
+        //Read StdOut
+        final Thread outThread = new Thread(new Runnable(){
+          public void run(){
+            waitUntilIsReadyOrEnd(process, process.getInputStream(), "StdOut")
+          }
+        })
+        outThread.start();
+        //Read StdErr
+        final Thread errThread = new Thread(new Runnable(){
+          public void run(){
+            waitUntilIsReadyOrEnd(process, process.getErrorStream(), "StdErr")
+          }
+        })
+        errThread.start();
+        final Thread currentThread = Thread.currentThread()
+        logger.quiet "Waiting on startup Readers"
+        
+        if (!isRunnable(currentThread)){
+          logger.quiet "Process finished fast finished startup"
+          outThread.interrupt();
+          errThread.interrupt();
+        } else {
+          waitOn(outThread, errThread, "StdOut")
+          waitOn(errThread, outThread, "StdErr")
+          logger.quiet "Joins complete"
+        }
+      }
+      
+      void waitOn(final Thread toWaitFor, final Thread other, String currentReader){
+        try {
+          toWaitFor.join();
+        } catch (InterruptedException e){
+          logger.quiet "$currentReader Reader interrupted..."
+          other.interrupt()
+          final Thread waiter = this.waiter
+          if (waiter != null){
+            waiter.interrupt()
+          } //else, stopped and deleted by another thread.
+        }
+      }
+      
+      void waitUntilIsReadyOrEnd(Process process, InputStream stream, String streamName){
         def line
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
+        BufferedReader reader = new BufferedReader(new InputStreamReader(stream))
         def currentThread = Thread.currentThread()
         boolean interruptSent = false
         try {
@@ -135,7 +179,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
             && (isRunnable(currentThread) && !isReady
               //If there is no data, nothing to siphon
               || (line != null && siphon))) {
-              //provision siphoning for process that dump when stdout is closed
+              //provision siphoning for process that dumps when stdout is closed
               //This applies to golang based code specifically
               if (siphon && isReady){
                 //done processing
@@ -144,9 +188,9 @@ class SpawnProcessTask extends DefaultSpawnTask {
               logger.quiet line
               runOutputActions(line)
               if (line.contains(ready)) {
-                  logger.quiet "$command is ready."
+                  logger.quiet "$streamName: $command is ready."
                   isReady = true
-                  logger.debug "Wake listeners. Ready = ${isReady}"
+                  logger.debug "$streamName: Wake listeners. Ready = ${isReady}"
                   if (waiter != null && !currentThread.isInterrupted() && !interruptSent) {
                     waiter.interrupt()
                     interruptSent = true
@@ -155,7 +199,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
           }
         } catch (Exception e){
           this.e = e;
-          logger.warn("Exception starting process", e)
+          logger.warn("$streamName: Exception starting process", e)
         } finally {
           try {
             if (!siphon){
@@ -163,17 +207,22 @@ class SpawnProcessTask extends DefaultSpawnTask {
               reader.close()
             }
           } catch (IOException e){
-            logger.info("Exception closing process inputstream: ${e.message}", e)
+            logger.info("Exception closing process $streamName: ${e.message}", e)
           }//end catch
-          if (waiter != null && !interruptSent) {
+          //Interrupt If waiter is listening
+          if (waiter != null && !interruptSent 
+              //Or Ready or not StdErr
+              && (this.isReady || !streamName.equals("StdErr"))) {
             waiter.interrupt()
-          } //else, waiter has abandoned listening
+            logger.quiet "$streamName sent Interrupt"
+          } //else, waiter has abandoned listening or StdErr with a closed stream.
         }//end finally
-        logger.trace "Finished reading stdout"
+        logger.quiet "Finished reading $streamName"
       }//end waitUntilIsReadyOrEnd
       
       boolean isRunnable(Thread currentThread){
-        return !currentThread.isInterrupted() && waiter != null & waiter.isAlive()
+        final Thread waiter =  this.waiter;
+        return !currentThread.isInterrupted() && waiter != null && waiter.isAlive()
       }
       
       def runOutputActions(String line) {
