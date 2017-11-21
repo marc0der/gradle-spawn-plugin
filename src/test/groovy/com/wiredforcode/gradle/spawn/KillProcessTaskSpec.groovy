@@ -105,4 +105,76 @@ class KillProcessTaskSpec extends Specification {
         then:
         killTask.pidLockFileName == '.new.pid.lock'
     }
+    
+    void "should kill a process with timeout set to long"() {
+        println "should kill a process with timeout set to long"
+        given:
+        def directoryPath = directory.toString()
+        def processSource = new File("src/test/resources/process.sh")
+        def process = new File(directory, "process.sh")
+        process << processSource.text
+        process.setExecutable(true)
+
+        and:
+        spawnTask.command = "./process.sh"
+        spawnTask.ready = "It is done..."
+        spawnTask.directory = directoryPath
+
+        and:
+        killTask.directory = directoryPath
+        killTask.timeout = 30
+
+        when:
+        spawnTask.spawn()
+        def lockFile = spawnTask.pidFile
+
+        then:
+        lockFile.exists()
+
+        when:
+        killTask.kill()
+
+        then:
+        !lockFile.exists()
+
+        cleanup:
+        assert directory.deleteDir()
+        killTask.timeout = 0
+    }
+    
+    void "should kill a process with timeout set to short"() {
+        println "should kill a process with timeout set to short"
+        given:
+        def directoryPath = directory.toString()
+        def processSource = new File("src/test/resources/process.sh")
+        def process = new File(directory, "process.sh")
+        process << processSource.text
+        process.setExecutable(true)
+
+        and:
+        spawnTask.command = "./process.sh"
+        spawnTask.ready = "It is done..."
+        spawnTask.directory = directoryPath
+
+        and:
+        killTask.directory = directoryPath
+        killTask.timeout = 1
+
+        when:
+        spawnTask.spawn()
+        def lockFile = spawnTask.pidFile
+
+        then:
+        lockFile.exists()
+
+        when:
+        killTask.kill()
+
+        then:
+        !lockFile.exists()
+
+        cleanup:
+        assert directory.deleteDir()
+        killTask.timeout = 0
+    }
 }

@@ -1,5 +1,7 @@
 package com.wiredforcode.gradle.spawn
 
+import java.nio.channels.InterruptedByTimeoutException
+
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
@@ -143,6 +145,7 @@ class SpawnProcessTaskSpec extends Specification {
         task.directory == directory.toString()
     }
 
+    //KABOOM!
     void "should not write the pid lock file if the process exits abnormally"() {
         given:
         def command = './exitAbnormally.sh'
@@ -190,6 +193,34 @@ class SpawnProcessTaskSpec extends Specification {
         then:
         outputBuilder.toString() == "Starting...\nIt is done...\n"
         task.getPidFile().name == pidLockFileName
+    }
+    
+    void "will timeout on missing ready"(){
+      given:
+      def command = './process.sh'
+      def ready = 'It is not done...'
+
+      and:
+      setExecutableProcess("process.sh")
+        
+      and:
+      task.command = command
+      task.ready = ready
+      task.directory = directory.toString()
+      task.timeout = 7
+
+      when:
+      task.spawn()
+
+      then:
+      def e = thrown(GradleException)
+      e.message == "Process failed to finish starting before timeout 7sec"
+
+      and:
+      !task.getPidFile().exists()
+      
+      cleanup:
+      task.timeout = 0
     }
 
     private void setExecutableProcess(String processFile) {
