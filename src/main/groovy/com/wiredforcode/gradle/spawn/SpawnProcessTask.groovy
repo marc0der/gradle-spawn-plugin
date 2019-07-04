@@ -91,9 +91,18 @@ class SpawnProcessTask extends DefaultSpawnTask {
     }
 
     private int extractPidFromProcess(Process process) {
-        def pidField = process.class.getDeclaredField('pid')
-        pidField.accessible = true
-
-        return pidField.getInt(process)
+        def pid
+        try {
+            // works wince java 9
+            def pidMethod = process.class.getDeclaredMethod('pid')
+            pidMethod.setAccessible(true)
+            pid = pidMethod.invoke(process)
+        } catch (ignored) {
+            // fallback to UNIX-only implementation
+            def pidField = process.class.getDeclaredField('pid')
+            pidField.accessible = true
+            pid = pidField.getInt(process)
+        }
+        return pid
     }
 }
