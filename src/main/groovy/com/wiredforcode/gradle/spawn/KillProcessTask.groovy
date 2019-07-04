@@ -16,7 +16,7 @@ class KillProcessTask extends DefaultSpawnTask {
 
         def killCommandLine
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            killCommandLine = Arrays.asList("taskkill", "/F", "/PID", "$pid")
+            killCommandLine = Arrays.asList("taskkill", "/F", "/T", "/PID", "$pid")
         } else {
             killCommandLine = Arrays.asList("kill", "$pid")
         }
