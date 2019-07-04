@@ -93,7 +93,7 @@ class SpawnProcessTask extends DefaultSpawnTask {
     private int extractPidFromProcess(Process process) {
         def pid
         try {
-            // works wince java 9
+            // works since java 9
             def pidMethod = process.class.getDeclaredMethod('pid')
             pidMethod.setAccessible(true)
             pid = pidMethod.invoke(process)
